@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useAppStore } from './store/app-store';
-import { isRTL, Language } from './lib/i18n';
+import { isRTL, Language, t } from './lib/i18n';
 import { generatePlans } from './lib/api';
 
 // Onboarding
+import { getExerciseImage, getExerciseVideo, getMealImage } from './lib/media';
 import { WelcomeScreen } from './components/onboarding/WelcomeScreen';
 import { CountrySelectScreen } from './components/onboarding/CountrySelectScreen';
 import { OnboardingScreen } from './components/onboarding/OnboardingScreen';
@@ -39,6 +40,7 @@ export default function App() {
   const [generatingPlans, setGeneratingPlans] = useState(false);
   const [plansError, setPlansError] = useState<string | null>(null);
   const [isUsingDemoPlans, setIsUsingDemoPlans] = useState(false);
+  const activeLanguage = profile?.language || selectedLanguage;
 
   // Set RTL direction
   useEffect(() => {
@@ -82,7 +84,8 @@ export default function App() {
           reps: Array.isArray(ex.reps) ? ex.reps : [ex.reps],
           restSec: ex.restSec,
           targetWeightKg: ex.targetWeightKg,
-          videoUrl: ex.videoUrl,
+	  imageUrl: ex.imageUrl || getExerciseImage(ex.name),
+          videoUrl: ex.videoUrl || getExerciseVideo(ex.name),
         })),
       }));
 
@@ -97,6 +100,7 @@ export default function App() {
           carbs: meal.carbs,
           fats: meal.fats,
           ingredients: meal.ingredients || [],
+	  imageUrl: meal.imageUrl || getMealImage(meal.name, meal.type),
         })),
       }));
 
@@ -115,7 +119,22 @@ export default function App() {
   const handleUseDemoPlans = async () => {
     setGeneratingPlans(false);
     const { DEMO_WORKOUT_PLAN, DEMO_MEAL_PLAN } = await import('./lib/demo-data');
-    setPlans(DEMO_WORKOUT_PLAN, DEMO_MEAL_PLAN, 1);
+    const workoutWithMedia = DEMO_WORKOUT_PLAN.map((day) => ({
+      ...day,
+      exercises: day.exercises.map((exercise) => ({
+        ...exercise,
+        imageUrl: exercise.imageUrl || getExerciseImage(exercise.name),
+        videoUrl: exercise.videoUrl || getExerciseVideo(exercise.name),
+      })),
+    }));
+    const mealsWithMedia = DEMO_MEAL_PLAN.map((day) => ({
+      ...day,
+      meals: day.meals.map((meal) => ({
+        ...meal,
+        imageUrl: meal.imageUrl || getMealImage(meal.name, meal.type),
+      })),
+    }));
+    setPlans(workoutWithMedia, mealsWithMedia, 1);
     setOnboardingComplete(true);
     setOnboardingStep(null);
     setPlansError(null);
@@ -128,9 +147,9 @@ export default function App() {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-green-100">
         <div className="text-center space-y-4 p-6 max-w-md">
           <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
-          <h2>Creating your personalized plans...</h2>
+          <h2>{t('generating_plans', activeLanguage)}</h2>
           <p className="text-muted-foreground">
-            Generating AI-powered workout and meal plans based on your profile
+	  {t('generating_subtitle', activeLanguage)}
           </p>
         </div>
       </div>

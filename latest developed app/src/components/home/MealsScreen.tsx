@@ -59,7 +59,7 @@ export function MealsScreen() {
           <div className="mt-3 p-3 bg-muted rounded-lg">
             <div className="flex justify-around text-sm">
               <div className="text-center">
-                <div className="text-muted-foreground">Total</div>
+	       <div className="text-muted-foreground">{t('total', profile.language)}</div>
                 <div>{totalCalories} {t('calories', profile.language)}</div>
               </div>
               <div className="text-center">
@@ -105,7 +105,7 @@ export function MealsScreen() {
 
           {(!currentDayPlan || currentDayPlan.meals.length === 0) && (
             <div className="text-center py-12 text-muted-foreground">
-              No meals planned for today
+	    {t('no_meals', profile.language)}
             </div>
           )}
         </div>

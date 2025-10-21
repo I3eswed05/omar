@@ -27,6 +27,7 @@ export interface Exercise {
   reps: number[];
   restSec: number;
   targetWeightKg?: number;
+  imageUrl?: string;
   videoUrl?: string;
 }
 
@@ -45,6 +46,7 @@ export interface Meal {
   carbs: number;
   fats: number;
   ingredients: string[];
+  imageUrl?: string;
 }
 
 export interface MealDay {

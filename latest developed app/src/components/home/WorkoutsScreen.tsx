@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useAppStore } from '../../store/app-store';
 import { t } from '../../lib/i18n';
 import { WorkoutCard } from '../workout-card';
-import { VideoPlayer } from '../video-player';
+import { ExerciseSessionModal } from '../workout-session-modal';
 import type { Exercise } from '../../store/app-store';
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -18,8 +18,7 @@ export function WorkoutsScreen() {
     addWorkoutLog,
   } = useAppStore();
 
-  const [videoExercise, setVideoExercise] = useState<Exercise | null>(null);
-
+  const [sessionExercise, setSessionExercise] = useState<Exercise | null>(null);
   if (!profile) return null;
 
   const currentDayPlan = workoutPlan.find((d) => d.day === selectedDay);
@@ -79,18 +78,15 @@ export function WorkoutsScreen() {
                   key={exercise.id}
                   exercise={exercise}
                   language={profile.language}
-                  week={currentWeek}
-                  day={selectedDay}
                   log={log}
-                  onLog={addWorkoutLog}
-                  onWatchVideo={setVideoExercise}
+		  onStratSession={setSessionExercise}
                 />
               );
             })}
 
             {(!currentDayPlan || currentDayPlan.exercises.length === 0) && (
               <div className="text-center py-12 text-muted-foreground">
-                No exercises planned for today
+                {t('no_exercises', profile.language)}
               </div>
             )}
           </div>
@@ -98,11 +94,15 @@ export function WorkoutsScreen() {
       </div>
 
       {/* Video modal */}
-      {videoExercise && (
-        <VideoPlayer
-          exercise={videoExercise}
-          onClose={() => setVideoExercise(null)}
-        />
+        {sessionExercise && (
+        <ExerciseSessionModal
+          exercise={sessionExercise}
+          language={profile.language}
+          week={currentWeek}
+          day={selectedDay}
+          onClose={() => setSessionExercise(null)}
+          onLog={addWorkoutLog}
+	 />
       )}
     </div>
   );

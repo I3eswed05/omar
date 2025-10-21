@@ -4,7 +4,7 @@ import { UserProfile } from '../store/app-store';
 const SERVER_URL = `https://${projectId}.supabase.co/functions/v1/make-server-4e345e61`;
 
 export async function generatePlans(profile: UserProfile, week: number = 1, accessToken?: string) {
-  const headers: HeadersInit = {
+	const headers: HeadersInit = {
     'Content-Type': 'application/json',
     'Authorization': `Bearer ${accessToken || publicAnonKey}`,
   };
@@ -30,9 +30,17 @@ export async function generatePlans(profile: UserProfile, week: number = 1, acce
   });
 
   if (!response.ok) {
-    const error = await response.json();
-    console.error('Failed to generate plans:', error);
-    throw new Error(error.message || 'Failed to generate plans');
+    let message = 'Failed to generate plans';
+    try {
+      const error = await response.json();
+      console.error('Failed to generate plans:', error);
+      message = error.message || error.error || message;
+    } catch (parseError) {
+      const text = await response.text();
+      console.error('Failed to generate plans (text):', text, parseError);
+      if (text) message = text;
+    }
+    throw new Error(message);
   }
 
   return response.json();
@@ -58,7 +66,7 @@ export async function generateWeeklyReport(
       week,
       workoutLogs,
       mealLogs,
-    }),
+  }),
   });
 
   if (!response.ok) {

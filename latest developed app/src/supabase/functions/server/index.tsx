@@ -81,11 +81,13 @@ Requirements:
 2. For ${profile.experience} level, use appropriate volume and intensity
 3. For ${profile.goal} goal, structure workouts accordingly
 4. Each exercise needs: name, sets, reps range, rest seconds, target weight in kg
+- Include imageUrl pointing to https://images.unsplash.com/ with 800x600 size that matches the exercise
+   - Include videoUrl (mp4) when available, otherwise null
 5. Meal plan: 3 main meals + 1-2 snacks per day
 6. Follow ${profile.dietType} diet (Keto: max 50g carbs/day, Halal: no pork/alcohol, Vegetarian: no meat)
 7. Ensure minimum 1500 calories per day
 8. Calculate macros: protein, carbs, fats (in grams)
-
+9. Each meal must have imageUrl from https://images.unsplash.com/ with 800x600 size relevant to the meal
 Return ONLY valid JSON with this exact structure (no markdown, no explanations):
 {
   "workout": {
@@ -100,7 +102,9 @@ Return ONLY valid JSON with this exact structure (no markdown, no explanations):
             "sets": 4,
             "reps": [8, 10],
             "restSec": 90,
-            "targetWeightKg": 60
+            "targetWeightKg": 60,
+	    "imageUrl": "https://images.unsplash.com/...",
+            "videoUrl": "https://cdn.../tutorial.mp4"
           }
         ]
       },
@@ -126,6 +130,8 @@ Return ONLY valid JSON with this exact structure (no markdown, no explanations):
             "carbs": 50,
             "fats": 15,
             "ingredients": ["ingredient1", "ingredient2"]
+            "ingredients": ["ingredient1", "ingredient2"],
+            "imageUrl": "https://images.unsplash.com/..."
           }
         ]
       }
