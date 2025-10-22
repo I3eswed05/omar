@@ -1,7 +1,7 @@
 
   # Fitness & Nutrition AI Coach
 
-  This is a code bundle for Fitness & Nutrition AI Coach. The original project is available at https://www.figma.com/design/T2YLTuUSe1NM9wmYISzh3q/Fitness---Nutrition-AI-Coach.
+  This is a code bundle for Fitness & Nutrition AI Coach. The original project is available at https://github.com/I3eswed05/omar.git
 
   ## Running the code
 

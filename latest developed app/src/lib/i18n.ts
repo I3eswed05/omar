@@ -32,6 +32,7 @@ export const translations: Record<Language, Record<string, string>> = {
     select_country: 'Select Your Country',
     country_subtitle: 'This helps us personalize your experience',
     continue: 'Continue',
+    back: 'Back',
     
     // Onboarding
     profile_title: 'Tell us about yourself',
@@ -98,7 +99,13 @@ export const translations: Record<Language, Record<string, string>> = {
     session_feedback: 'How was your workout?',
     session_feedback_question: 'Share how the session felt so we can adjust your plan.',
     skip_exercise: 'Skip exercise',
+    skip_reason_prompt: 'What made you skip this exercise? We will adjust future plans based on your answer.',
+    skip_reason_default: 'No reason provided',
     no_video_available: 'Video coming soon',
+    media_photo_placeholder: 'Photo preview coming soon',
+    media_video_premium_placeholder: 'Video walkthroughs for Premium members are coming soon.',
+    media_video_locked_hint: 'Upgrade to Premium to unlock guided workout videos.',
+    timer_guidance: 'Press start when you begin the set, then restart it to track your rest between sets.',
     // Meals
     breakfast: 'Breakfast',
     lunch: 'Lunch',
@@ -130,6 +137,8 @@ export const translations: Record<Language, Record<string, string>> = {
     free_tier: 'Free',
     premium_tier: 'Premium',
     upgrade: 'Upgrade',
+    dark_mode: 'Switch to dark mode',
+    light_mode: 'Switch to light mode',
     
     // Auth
     sign_in: 'Sign In',
@@ -142,6 +151,15 @@ export const translations: Record<Language, Record<string, string>> = {
     // Errors
     error: 'Error',
     try_again: 'Try Again',
+    request_alternative: 'Need a different option?',
+    alternative_reason_prompt: 'Why is this not suitable? (optional)',
+    alternative_loading: 'Finding smart alternatives...',
+    alternative_title_exercise: 'Choose another exercise',
+    alternative_title_meal: 'Choose another meal',
+    alternative_replace: 'Use this instead',
+    alternative_no_options: 'No alternatives available right now',
+    alternative_error: 'Could not load alternatives. Please try again.',
+    close: 'Close',
   },
   
   'ar-Gulf': {
@@ -152,6 +170,7 @@ export const translations: Record<Language, Record<string, string>> = {
     select_country: 'اختر بلدك',
     country_subtitle: 'هذا يساعدنا نخصص تجربتك',
     continue: 'استمر',
+    back: 'رجوع',
     
     profile_title: 'عرفنا على نفسك',
     whats_your_name: 'شو اسمك؟',
@@ -215,7 +234,13 @@ export const translations: Record<Language, Record<string, string>> = {
     session_feedback: 'كيف كان تمرينك؟',
     session_feedback_question: 'خبرنا كيف كان التمرين عشان نعدل البرنامج.',
     skip_exercise: 'تخطي التمرين',
+    skip_reason_prompt: 'ليش حبيت تتخطى التمرين؟ راح نعدل الخطة بناءً على سببك.',
+    skip_reason_default: 'بدون سبب محدد',
     no_video_available: 'الفيديو غير متوفر حالياً',
+    media_photo_placeholder: 'الصورة بتكون هنا قريباً',
+    media_video_premium_placeholder: 'فيديو الشرح للمميزين بيكون جاهز قريب.',
+    media_video_locked_hint: 'فعّل الباقة المميزة عشان تشوف فيديوهات الشرح.',
+    timer_guidance: 'ابدأ المؤقت مع أول تكرار، وبعد ما تخلص شغّله للراحة عشان تعرف متى ترجع.',
     breakfast: 'الفطور',
     lunch: 'الغداء',
     dinner: 'العشاء',
@@ -242,6 +267,8 @@ export const translations: Record<Language, Record<string, string>> = {
     free_tier: 'مجاني',
     premium_tier: 'مميز',
     upgrade: 'ترقية',
+    dark_mode: 'وضع ليلي',
+    light_mode: 'وضع نهاري',
     
     sign_in: 'تسجيل الدخول',
     sign_up: 'إنشاء حساب',
@@ -252,6 +279,15 @@ export const translations: Record<Language, Record<string, string>> = {
     
     error: 'خطأ',
     try_again: 'حاول مرة أخرى',
+    request_alternative: 'تبي خيار ثاني؟',
+    alternative_reason_prompt: 'ليش ما يناسبك؟ (اختياري)',
+    alternative_loading: 'ندور لك بدائل مناسبة...',
+    alternative_title_exercise: 'اختار تمرين بديل',
+    alternative_title_meal: 'اختار وجبة بديلة',
+    alternative_replace: 'استخدم هذا',
+    alternative_no_options: 'ما قدرنا نلاقي بدائل الحين',
+    alternative_error: 'صار خطأ في تحميل البدائل. حاول مرة ثانية.',
+    close: 'إغلاق',
   },
   
   'ar-EG': {
@@ -262,6 +298,7 @@ export const translations: Record<Language, Record<string, string>> = {
     select_country: 'اختار بلدك',
     country_subtitle: 'ده هيساعدنا نخصصلك التجربة',
     continue: 'كمل',
+    back: 'رجوع',
     
     profile_title: 'عرفنا على نفسك',
     whats_your_name: 'اسمك ايه؟',
@@ -325,7 +362,13 @@ export const translations: Record<Language, Record<string, string>> = {
     session_feedback: 'التمرين كان عامل إزاي؟',
     session_feedback_question: 'قولنا إحساسك بالتمرين علشان نزبط الخطة.',
     skip_exercise: 'تخطى التمرين',
+    skip_reason_prompt: 'ليه حبيت تتخطى التمرين؟ هنعدل الخطة على حسب ردك.',
+    skip_reason_default: 'من غير سبب محدد',
     no_video_available: 'الفيديو مش متاح حالياً',
+    media_photo_placeholder: 'الصورة هتظهر هنا قريب',
+    media_video_premium_placeholder: 'فيديو الشرح للمميزين جاي قريب.',
+    media_video_locked_hint: 'فعّل الباقة المميزة علشان تشوف فيديوهات الشرح.',
+    timer_guidance: 'ابدأ المؤقت أول ما تبدأ التمرين، وبعد ما تخلص شغّله تاني علشان تحسب وقت الراحة.',
     
     breakfast: 'الفطار',
     lunch: 'الغدا',
@@ -353,6 +396,8 @@ export const translations: Record<Language, Record<string, string>> = {
     free_tier: 'مجاني',
     premium_tier: 'مميز',
     upgrade: 'ارتقي',
+    dark_mode: 'الوضع الليلي',
+    light_mode: 'الوضع النهاري',
     
     sign_in: 'دخول',
     sign_up: 'حساب جديد',
@@ -363,6 +408,15 @@ export const translations: Record<Language, Record<string, string>> = {
     
     error: 'غلط',
     try_again: 'حاول تاني',
+    request_alternative: 'عايز اختيار تاني؟',
+    alternative_reason_prompt: 'ليه مش مناسب؟ (اختياري)',
+    alternative_loading: 'بنجهز بدائل ذكية...',
+    alternative_title_exercise: 'اختار تمرين بديل',
+    alternative_title_meal: 'اختار وجبة بديلة',
+    alternative_replace: 'استخدم ده',
+    alternative_no_options: 'مافيش بدائل متاحة دلوقتي',
+    alternative_error: 'حصل خطأ وإحنا بنجيب البدائل. حاول تاني.',
+    close: 'إغلاق',
   },
   
   'ar-Levant': {
@@ -373,6 +427,7 @@ export const translations: Record<Language, Record<string, string>> = {
     select_country: 'اختار بلدك',
     country_subtitle: 'هيدا بساعدنا نخصصلك التجربة',
     continue: 'كمل',
+    back: 'رجوع',
     
     profile_title: 'عرفنا عنك',
     whats_your_name: 'شو اسمك؟',
@@ -437,7 +492,13 @@ export const translations: Record<Language, Record<string, string>> = {
     session_feedback: 'كيف كان تمرينك؟',
     session_feedback_question: 'خبرنا كيف حسيت بالتمرين لنعدل البرنامج.',
     skip_exercise: 'تخطى التمرين',
+    skip_reason_prompt: 'ليش حبيت تتخطى التمرين؟ رح نعدل الخطة على حسب سببك.',
+    skip_reason_default: 'بدون سبب محدد',
     no_video_available: 'الفيديو مش متوفر حالياً',
+    media_photo_placeholder: 'الصورة رح تنعرض هون قريباً',
+    media_video_premium_placeholder: 'فيديو الشرح للمشتركين المميزين جاي قريب.',
+    media_video_locked_hint: 'فعّل الباقة المميزة لتشوف فيديوهات الشرح.',
+    timer_guidance: 'شغّل المؤقت أول ما تبلش المجموعة، وبعد ما تخلص شغّله للراحة لتعرف إمتى ترجع.',
     breakfast: 'الفطور',
     lunch: 'الغدا',
     dinner: 'العشا',
@@ -464,6 +525,8 @@ export const translations: Record<Language, Record<string, string>> = {
     free_tier: 'مجاني',
     premium_tier: 'مميز',
     upgrade: 'ترقي',
+    dark_mode: 'الوضع الليلي',
+    light_mode: 'الوضع النهاري',
     
     sign_in: 'دخول',
     sign_up: 'حساب جديد',
@@ -474,6 +537,15 @@ export const translations: Record<Language, Record<string, string>> = {
     
     error: 'غلط',
     try_again: 'حاول مرة تانية',
+    request_alternative: 'بدك خيار تاني؟',
+    alternative_reason_prompt: 'ليش ما بناسبك؟ (اختياري)',
+    alternative_loading: 'عم نلاقي بدائل ذكية...',
+    alternative_title_exercise: 'اختار تمرين بديل',
+    alternative_title_meal: 'اختار وجبة بديلة',
+    alternative_replace: 'استعمل هاد',
+    alternative_no_options: 'ما لقينا بدائل هلق',
+    alternative_error: 'صار خطأ وقت جربنا نجيب البدائل. جرّب بعدين.',
+    close: 'إغلاق',
   },
   
   'ar-Maghreb': {
@@ -484,6 +556,7 @@ export const translations: Record<Language, Record<string, string>> = {
     select_country: 'اختار بلادك',
     country_subtitle: 'هادشي غادي يعاونا نخصصو ليك التجربة',
     continue: 'كمل',
+    back: 'رجوع',
     
     profile_title: 'عرفنا عليك',
     whats_your_name: 'شنو سميتك؟',
@@ -547,7 +620,13 @@ export const translations: Record<Language, Record<string, string>> = {
     session_feedback: 'كيف بان لك التمرين؟',
     session_feedback_question: 'قول لينا كيف حسيت باش نعدلو البرنامج.',
     skip_exercise: 'تخطى التمرين',
+    skip_reason_prompt: 'علاش بغيت تتخطى التمرين؟ غادي نعدلو الخطة على حسب الجواب.',
+    skip_reason_default: 'ماكاين حتى سبب محدد',
     no_video_available: 'الفيديو مازال ما توفرش',
+    media_photo_placeholder: 'الصورة غادي تبان هنا قريب',
+    media_video_premium_placeholder: 'فيديو الشرح للمميزين غادي يكون جاهز قريب.',
+    media_video_locked_hint: 'فعّل الباقة المميزة باش تشوف فيديوهات الشرح.',
+    timer_guidance: 'بدا الكرونو منين تبدا المجموعة، ومنين تسالي رجّعو باش تحسب وقت الراحة.',
     breakfast: 'الفطور',
     lunch: 'الغدا',
     dinner: 'العشا',
@@ -574,6 +653,8 @@ export const translations: Record<Language, Record<string, string>> = {
     free_tier: 'مجاني',
     premium_tier: 'مميز',
     upgrade: 'ارتقي',
+    dark_mode: 'الوضع الليلي',
+    light_mode: 'الوضع النهاري',
     
     sign_in: 'دخول',
     sign_up: 'حساب جديد',
@@ -584,6 +665,15 @@ export const translations: Record<Language, Record<string, string>> = {
     
     error: 'غلط',
     try_again: 'حاول مرة أخرى',
+    request_alternative: 'باغي اختيار آخر؟',
+    alternative_reason_prompt: 'علاش ما ناسبك؟ (اختياري)',
+    alternative_loading: 'كنقلبو على بدائل مناسبة...',
+    alternative_title_exercise: 'اختار تمرين بديل',
+    alternative_title_meal: 'اختار وجبة بديلة',
+    alternative_replace: 'استعمل هادا',
+    alternative_no_options: 'ما لقيناش بدائل دابا',
+    alternative_error: 'وقع خطأ فتحميل البدائل. جرّب من بعد.',
+    close: 'إغلاق',
   },
 };
 

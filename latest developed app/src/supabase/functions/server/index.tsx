@@ -1,4 +1,4 @@
-import { Hono } from 'npm:hono';
+import { Context, Hono } from 'npm:hono';
 import { cors } from 'npm:hono/cors';
 import { logger } from 'npm:hono/logger';
 import { createClient } from 'jsr:@supabase/supabase-js@2';
@@ -36,6 +36,9 @@ const GeneratePlansSchema = z.object({
     language: z.string(),
   }),
   week: z.number().default(1),
+  feedback: z.object({
+    skipReasons: z.array(z.string()).min(1).max(10),
+  }).optional(),
 });
 
 const WeeklyReportSchema = z.object({
@@ -55,9 +58,35 @@ const WeeklyReportSchema = z.object({
   })),
 });
 
+const ExerciseAlternativesSchema = z.object({
+  profile: GeneratePlansSchema.shape.profile,
+  exercise: z.object({
+    name: z.string(),
+    sets: z.number(),
+    reps: z.array(z.number()).min(1),
+    restSec: z.number(),
+    targetWeightKg: z.number().nullable(),
+  }),
+  reason: z.string().optional().default(''),
+});
+
+const MealAlternativesSchema = z.object({
+  profile: GeneratePlansSchema.shape.profile,
+  meal: z.object({
+    name: z.string(),
+    type: z.enum(['breakfast', 'lunch', 'dinner', 'snack']),
+    calories: z.number(),
+    protein: z.number(),
+    carbs: z.number(),
+    fats: z.number(),
+    ingredients: z.array(z.string()),
+  }),
+  reason: z.string().optional().default(''),
+});
+
 // Helper: Generate AI plans
 async function generatePlans(input: z.infer<typeof GeneratePlansSchema>) {
-  const { profile, week } = input;
+  const { profile, week, feedback } = input;
   
   const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
   if (!openaiApiKey) {
@@ -65,6 +94,10 @@ async function generatePlans(input: z.infer<typeof GeneratePlansSchema>) {
   }
 
   // Build prompt based on profile
+  const feedbackSection = feedback?.skipReasons?.length
+    ? `\nPrevious feedback from the user about skipped exercises:\n${feedback.skipReasons.map((reason, index) => `${index + 1}. ${reason}`).join('\n')}\nAdjust the new plan to reduce the likelihood of these issues.\n`
+    : '';
+
   const prompt = `You are a professional fitness and nutrition coach. Generate a 7-day workout and meal plan.
 
 Profile:
@@ -75,6 +108,7 @@ Profile:
 - Goal: ${profile.goal}
 - Diet: ${profile.dietType}
 - Week: ${week}
+${feedbackSection}
 
 Requirements:
 1. Workout plan: 5-6 training days + 1-2 rest days
@@ -103,7 +137,7 @@ Return ONLY valid JSON with this exact structure (no markdown, no explanations):
             "reps": [8, 10],
             "restSec": 90,
             "targetWeightKg": 60,
-	    "imageUrl": "https://images.unsplash.com/...",
+            "imageUrl": "https://images.unsplash.com/...",
             "videoUrl": "https://cdn.../tutorial.mp4"
           }
         ]
@@ -129,7 +163,6 @@ Return ONLY valid JSON with this exact structure (no markdown, no explanations):
             "protein": 30,
             "carbs": 50,
             "fats": 15,
-            "ingredients": ["ingredient1", "ingredient2"]
             "ingredients": ["ingredient1", "ingredient2"],
             "imageUrl": "https://images.unsplash.com/..."
           }
@@ -265,8 +298,156 @@ Return ONLY valid JSON:
   }
 }
 
+async function generateExerciseAlternatives(input: z.infer<typeof ExerciseAlternativesSchema>) {
+  const { profile, exercise, reason } = input;
+
+  const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
+  if (!openaiApiKey) {
+    throw new Error('OPENAI_API_KEY environment variable not set');
+  }
+
+  const prompt = `An athlete needs alternative exercises.
+
+Profile:
+- Age: ${profile.age}, Gender: ${profile.gender}
+- Height: ${profile.height}cm, Weight: ${profile.weight}kg
+- Experience: ${profile.experience}
+- Goal: ${profile.goal}
+- Diet: ${profile.dietType}
+- Country: ${profile.country}
+
+Current exercise they cannot perform: ${exercise.name}
+Sets: ${exercise.sets}, Reps: ${exercise.reps.join('-')}, Rest: ${exercise.restSec} sec${exercise.targetWeightKg ? `, Target Weight: ${exercise.targetWeightKg}kg` : ''}
+Reason provided: ${reason || 'Not specified'}
+
+Suggest three suitable alternative exercises that fit the same training intent, respecting their experience level and goal. Provide a short rationale for each.
+
+Return ONLY valid JSON with this shape (no comments, no markdown):
+{
+  "alternatives": [
+    {
+      "id": "unique-id",
+      "name": "Exercise Name",
+      "sets": 3,
+      "reps": [10, 12],
+      "restSec": 90,
+      "targetWeightKg": 0,
+      "rationale": "Why this works"
+    }
+  ]
+}`;
+
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${openaiApiKey}`,
+    },
+    body: JSON.stringify({
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'system',
+          content: 'You are an expert strength coach. Always respond with valid JSON only.',
+        },
+        {
+          role: 'user',
+          content: prompt,
+        },
+      ],
+      temperature: 0.6,
+      response_format: { type: 'json_object' },
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('OpenAI exercise alternatives error:', errorText);
+    throw new Error(`OpenAI API error: ${response.status} ${errorText}`);
+  }
+
+  const data = await response.json();
+  const content = data.choices[0].message.content;
+  return JSON.parse(content);
+}
+
+async function generateMealAlternatives(input: z.infer<typeof MealAlternativesSchema>) {
+  const { profile, meal, reason } = input;
+
+  const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
+  if (!openaiApiKey) {
+    throw new Error('OPENAI_API_KEY environment variable not set');
+  }
+
+  const prompt = `You are a nutrition coach. Suggest alternative meals.
+
+Profile:
+- Age: ${profile.age}, Gender: ${profile.gender}
+- Height: ${profile.height}cm, Weight: ${profile.weight}kg
+- Goal: ${profile.goal}
+- Diet: ${profile.dietType}
+- Country: ${profile.country}
+
+Current meal they cannot have: ${meal.name} (${meal.type})
+Calories: ${meal.calories}, Protein: ${meal.protein}g, Carbs: ${meal.carbs}g, Fats: ${meal.fats}g
+Ingredients: ${meal.ingredients.join(', ')}
+Reason provided: ${reason || 'Not specified'}
+
+Suggest three balanced alternatives that match their goal and dietary rules. Include macros and a short rationale.
+
+Return ONLY valid JSON with this shape:
+{
+  "alternatives": [
+    {
+      "id": "unique-id",
+      "name": "Meal Name",
+      "type": "breakfast",
+      "calories": 450,
+      "protein": 35,
+      "carbs": 40,
+      "fats": 18,
+      "ingredients": ["item"],
+      "rationale": "Why this works"
+    }
+  ]
+}`;
+
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${openaiApiKey}`,
+    },
+    body: JSON.stringify({
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'system',
+          content: 'You are a registered dietitian. Always respond with valid JSON only.',
+        },
+        {
+          role: 'user',
+          content: prompt,
+        },
+      ],
+      temperature: 0.6,
+      response_format: { type: 'json_object' },
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('OpenAI meal alternatives error:', errorText);
+    throw new Error(`OpenAI API error: ${response.status} ${errorText}`);
+  }
+
+  const data = await response.json();
+  const content = data.choices[0].message.content;
+  return JSON.parse(content);
+}
+
 // Routes
-app.post('/make-server-4e345e61/api/ai/generate-plans', async (c) => {
+async function handleGeneratePlans(c: Context) {
   try {
     const body = await c.req.json();
     const validated = GeneratePlansSchema.parse(body);
@@ -288,9 +469,12 @@ app.post('/make-server-4e345e61/api/ai/generate-plans', async (c) => {
       message: error instanceof Error ? error.message : 'Unknown error' 
     }, 500);
   }
-});
+}
 
-app.post('/make-server-4e345e61/api/ai/weekly-report', async (c) => {
+app.post('/api/ai/generate-plans', handleGeneratePlans);
+app.post('/make-server-4e345e61/api/ai/generate-plans', handleGeneratePlans);
+
+async function handleWeeklyReport(c: Context) {
   try {
     const accessToken = c.req.header('Authorization')?.split(' ')[1];
     
@@ -324,8 +508,74 @@ app.post('/make-server-4e345e61/api/ai/weekly-report', async (c) => {
       message: error instanceof Error ? error.message : 'Unknown error' 
     }, 500);
   }
-});
+}
 
+app.post('/api/ai/weekly-report', handleWeeklyReport);
+app.post('/make-server-4e345e61/api/ai/weekly-report', handleWeeklyReport);
+
+async function handleExerciseAlternatives(c: Context) {
+  try {
+    const body = await c.req.json();
+    const normalized = {
+      ...body,
+      exercise: body.exercise ? {
+        ...body.exercise,
+        reps: Array.isArray(body.exercise.reps) ? body.exercise.reps : [body.exercise.reps],
+        targetWeightKg: body.exercise.targetWeightKg ?? null,
+      } : body.exercise,
+      reason: typeof body.reason === 'string' ? body.reason : '',
+    };
+    const validated = ExerciseAlternativesSchema.parse(normalized);
+
+    const result = await generateExerciseAlternatives(validated);
+    return c.json(result);
+  } catch (error) {
+    console.error('Error in exercise-alternatives endpoint:', error);
+
+    if (error instanceof z.ZodError) {
+      return c.json({ error: 'Invalid request data', details: error.errors }, 400);
+    }
+
+    return c.json({
+      error: 'Failed to generate exercise alternatives',
+      message: error instanceof Error ? error.message : 'Unknown error',
+    }, 500);
+  }
+}
+
+async function handleMealAlternatives(c: Context) {
+  try {
+    const body = await c.req.json();
+    const normalized = {
+      ...body,
+      reason: typeof body.reason === 'string' ? body.reason : '',
+    };
+    const validated = MealAlternativesSchema.parse(normalized);
+
+    const result = await generateMealAlternatives(validated);
+    return c.json(result);
+  } catch (error) {
+    console.error('Error in meal-alternatives endpoint:', error);
+
+    if (error instanceof z.ZodError) {
+      return c.json({ error: 'Invalid request data', details: error.errors }, 400);
+    }
+
+    return c.json({
+      error: 'Failed to generate meal alternatives',
+      message: error instanceof Error ? error.message : 'Unknown error',
+    }, 500);
+  }
+}
+
+app.post('/api/ai/exercise-alternatives', handleExerciseAlternatives);
+app.post('/make-server-4e345e61/api/ai/exercise-alternatives', handleExerciseAlternatives);
+app.post('/api/ai/meal-alternatives', handleMealAlternatives);
+app.post('/make-server-4e345e61/api/ai/meal-alternatives', handleMealAlternatives);
+
+app.get('/health', (c) => {
+  return c.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
 app.get('/make-server-4e345e61/health', (c) => {
   return c.json({ status: 'ok', timestamp: new Date().toISOString() });
 });

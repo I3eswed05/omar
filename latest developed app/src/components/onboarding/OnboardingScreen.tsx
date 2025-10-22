@@ -272,7 +272,7 @@ export function OnboardingScreen({ country, language, onComplete }: OnboardingSc
             size="lg"
             className="w-full"
           >
-            Back
+            {t('back', language)}
           </Button>
         )}
       </div>

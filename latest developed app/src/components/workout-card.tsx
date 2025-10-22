@@ -1,4 +1,4 @@
-import { CheckCircle, Clock } from 'lucide-react';
+import { CheckCircle, Clock, RefreshCcw } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Exercise, WorkoutLog } from '../store/app-store';
@@ -9,13 +9,15 @@ interface WorkoutCardProps {
   language: Language;
   log?: WorkoutLog;
   onStartSession: (exercise: Exercise) => void;
+  onRequestAlternative: (exercise: Exercise) => void;
 }
 
 export function WorkoutCard({
   exercise,
   language,
   log,
-  onStartSession
+  onStartSession,
+  onRequestAlternative,
 }: WorkoutCardProps) {
   const repsText = exercise.reps.length === 2
     ? `${exercise.reps[0]}-${exercise.reps[1]}`
@@ -24,13 +26,9 @@ export function WorkoutCard({
   return (
     <Card className="p-4 space-y-3">
       <div className="flex items-start gap-3">
-        {exercise.imageUrl && (
-          <img
-            src={exercise.imageUrl}
-            alt={exercise.name}
-            className="w-24 h-24 rounded-lg object-cover"
-          />
-        )}
+        <div className="w-24 h-24 rounded-lg bg-muted flex items-center justify-center text-xs text-muted-foreground text-center px-2">
+          {t('media_photo_placeholder', language)}
+        </div>
         <div className="flex-1 min-w-0">
           <h3 className="truncate font-semibold">{exercise.name}</h3>
           <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground mt-2">
@@ -53,6 +51,15 @@ export function WorkoutCard({
         <Clock className="w-4 h-4 mr-1" />
         {t('start_session', language)}
       </Button>
+      <Button
+        onClick={() => onRequestAlternative(exercise)}
+        variant="outline"
+        size="sm"
+        className="w-full"
+      >
+        <RefreshCcw className="w-4 h-4 mr-1" />
+        {t('request_alternative', language)}
+      </Button>
 
       {log && (
         <div className={`
@@ -69,4 +76,3 @@ export function WorkoutCard({
     </Card>
   );
 }
-

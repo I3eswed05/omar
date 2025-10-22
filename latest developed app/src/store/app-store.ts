@@ -54,12 +54,15 @@ export interface MealDay {
   meals: Meal[];
 }
 
+export type ThemePreference = 'light' | 'dark';
+
 export interface WorkoutLog {
   exerciseId: string;
   week: number;
   day: string;
   status: 'completed' | 'skipped' | 'too_easy' | 'too_hard';
   date: string;
+  reason?: string;
 }
 
 export interface MealLog {
@@ -107,9 +110,15 @@ interface AppState {
   // UI
   selectedDay: string;
   setSelectedDay: (day: string) => void;
+  theme: ThemePreference;
+  setTheme: (theme: ThemePreference) => void;
   
   // Clear all data
   clearAll: () => void;
+
+  // Plan adjustments
+  replaceExercise: (payload: { day: string; exerciseId: string; replacement: Exercise }) => void;
+  replaceMeal: (payload: { day: string; mealId: string; replacement: Meal }) => void;
 }
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -164,6 +173,35 @@ export const useAppStore = create<AppState>()(
       // UI
       selectedDay: DAYS[new Date().getDay() === 0 ? 6 : new Date().getDay() - 1],
       setSelectedDay: (day) => set({ selectedDay: day }),
+      theme: 'light',
+      setTheme: (theme) => set({ theme }),
+      
+      replaceExercise: ({ day, exerciseId, replacement }) =>
+        set((state) => ({
+          workoutPlan: state.workoutPlan.map((workoutDay) =>
+            workoutDay.day === day
+              ? {
+                  ...workoutDay,
+                  exercises: workoutDay.exercises.map((exercise) =>
+                    exercise.id === exerciseId ? replacement : exercise
+                  ),
+                }
+              : workoutDay
+          ),
+        })),
+      replaceMeal: ({ day, mealId, replacement }) =>
+        set((state) => ({
+          mealPlan: state.mealPlan.map((mealDay) =>
+            mealDay.day === day
+              ? {
+                  ...mealDay,
+                  meals: mealDay.meals.map((meal) =>
+                    meal.id === mealId ? replacement : meal
+                  ),
+                }
+              : mealDay
+          ),
+        })),
       
       // Clear
       clearAll: () => set({
@@ -178,6 +216,7 @@ export const useAppStore = create<AppState>()(
         mealLogs: [],
         isPremium: false,
         weeklyReport: null,
+        theme: 'light',
       }),
     }),
     {

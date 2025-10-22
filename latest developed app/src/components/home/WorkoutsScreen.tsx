@@ -4,6 +4,9 @@ import { t } from '../../lib/i18n';
 import { WorkoutCard } from '../workout-card';
 import { ExerciseSessionModal } from '../workout-session-modal';
 import type { Exercise } from '../../store/app-store';
+import { ExerciseAlternativesModal, SuggestedExercise } from '../alternatives-modal';
+import { getExerciseImage, getExerciseVideo } from '../../lib/media';
+import { requestExerciseAlternatives } from '../../lib/api';
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
@@ -16,9 +19,89 @@ export function WorkoutsScreen() {
     selectedDay,
     setSelectedDay,
     addWorkoutLog,
+    replaceExercise,
+    isPremium,
   } = useAppStore();
 
   const [sessionExercise, setSessionExercise] = useState<Exercise | null>(null);
+  const [exerciseAlternatives, setExerciseAlternatives] = useState<{
+    exercise: Exercise | null;
+    suggestions: SuggestedExercise[];
+    loading: boolean;
+    error: string | null;
+  }>({
+    exercise: null,
+    suggestions: [],
+    loading: false,
+    error: null,
+  });
+
+  const closeExerciseAlternatives = () =>
+    setExerciseAlternatives({
+      exercise: null,
+      suggestions: [],
+      loading: false,
+      error: null,
+    });
+
+  const handleRequestAlternative = async (exercise: Exercise) => {
+    if (!profile) return;
+
+    const reason = window.prompt(t('alternative_reason_prompt', profile.language) || '');
+    if (reason === null) {
+      return;
+    }
+
+    setExerciseAlternatives({
+      exercise,
+      suggestions: [],
+      loading: true,
+      error: null,
+    });
+
+    try {
+      const response = await requestExerciseAlternatives(profile, exercise, reason.trim());
+      const suggestions: SuggestedExercise[] = response.alternatives.map((item: SuggestedExercise, index: number) => ({
+        ...item,
+        id: item.id || `${exercise.id}-alt-${index}-${Date.now()}`,
+        reps: Array.isArray(item.reps) ? item.reps : [item.reps],
+        imageUrl: getExerciseImage(item.name),
+        videoUrl: getExerciseVideo(item.name),
+      }));
+
+      setExerciseAlternatives({
+        exercise,
+        suggestions,
+        loading: false,
+        error: null,
+      });
+    } catch (err) {
+      console.error(err);
+      setExerciseAlternatives({
+        exercise,
+        suggestions: [],
+        loading: false,
+        error: (err as Error).message,
+      });
+    }
+  };
+
+  const handleUseExerciseAlternative = (replacement: SuggestedExercise) => {
+    if (!exerciseAlternatives.exercise) return;
+
+    replaceExercise({
+      day: selectedDay,
+      exerciseId: exerciseAlternatives.exercise.id,
+      replacement: {
+        ...replacement,
+        id: replacement.id,
+        imageUrl: getExerciseImage(replacement.name),
+        videoUrl: getExerciseVideo(replacement.name),
+      },
+    });
+    closeExerciseAlternatives();
+  };
+
   if (!profile) return null;
 
   const currentDayPlan = workoutPlan.find((d) => d.day === selectedDay);
@@ -79,7 +162,8 @@ export function WorkoutsScreen() {
                   exercise={exercise}
                   language={profile.language}
                   log={log}
-		  onStratSession={setSessionExercise}
+                  onStartSession={setSessionExercise}
+                  onRequestAlternative={handleRequestAlternative}
                 />
               );
             })}
@@ -94,16 +178,27 @@ export function WorkoutsScreen() {
       </div>
 
       {/* Video modal */}
-        {sessionExercise && (
+      {sessionExercise && (
         <ExerciseSessionModal
           exercise={sessionExercise}
           language={profile.language}
           week={currentWeek}
           day={selectedDay}
+          isPremium={isPremium}
           onClose={() => setSessionExercise(null)}
           onLog={addWorkoutLog}
-	 />
+        />
       )}
+      <ExerciseAlternativesModal
+        open={Boolean(exerciseAlternatives.exercise)}
+        loading={exerciseAlternatives.loading}
+        language={profile.language}
+        onClose={closeExerciseAlternatives}
+        suggestions={exerciseAlternatives.suggestions}
+        onSelect={handleUseExerciseAlternative}
+        error={exerciseAlternatives.error || undefined}
+        originalName={exerciseAlternatives.exercise?.name || ''}
+      />
     </div>
   );
 }

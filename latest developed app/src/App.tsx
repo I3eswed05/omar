@@ -18,6 +18,7 @@ import { BottomNav } from './components/bottom-nav';
 import { SettingsMenu } from './components/settings-menu';
 import { QuickTips } from './components/quick-tips';
 import { DemoBanner } from './components/demo-banner';
+import { ThemeToggle } from './components/theme-toggle';
 
 import './styles/globals.css';
 
@@ -31,6 +32,8 @@ export default function App() {
     setProfile,
     setOnboardingComplete,
     setPlans,
+    workoutLogs,
+    theme,
   } = useAppStore();
 
   const [onboardingStep, setOnboardingStep] = useState<OnboardingStep>('welcome');
@@ -41,6 +44,31 @@ export default function App() {
   const [plansError, setPlansError] = useState<string | null>(null);
   const [isUsingDemoPlans, setIsUsingDemoPlans] = useState(false);
   const activeLanguage = profile?.language || selectedLanguage;
+  const defaultSkipReasonLabels = new Set([
+    'No reason provided',
+    'بدون سبب محدد',
+    'من غير سبب محدد',
+    'ماكاين حتى سبب محدد',
+  ]);
+
+  const sanitizeMediaUrl = (url: unknown): string | null => {
+    if (typeof url !== 'string') return null;
+    try {
+      const parsed = new URL(url);
+      return ['http:', 'https:'].includes(parsed.protocol) ? parsed.toString() : null;
+    } catch {
+      return null;
+    }
+  };
+
+  // Apply theme
+  useEffect(() => {
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [theme]);
 
   // Set RTL direction
   useEffect(() => {
@@ -62,18 +90,57 @@ export default function App() {
     setOnboardingStep('profile');
   };
 
-  const handleOnboardingComplete = async (userProfile: typeof profile) => {
+  const buildPlanFeedback = () => {
+    const skipReasons = Array.from(
+      new Set(
+        workoutLogs
+          .filter((log) => log.status === 'skipped' && typeof log.reason === 'string')
+          .map((log) => log.reason!.trim())
+          .filter((reason) => reason && !defaultSkipReasonLabels.has(reason))
+      )
+    ).slice(0, 10);
+
+    return skipReasons.length ? { skipReasons } : undefined;
+  };
+
+  const handleUseDemoPlans = async () => {
+    setGeneratingPlans(false);
+    const { DEMO_WORKOUT_PLAN, DEMO_MEAL_PLAN } = await import('./lib/demo-data');
+    const workoutWithMedia = DEMO_WORKOUT_PLAN.map((day) => ({
+      ...day,
+      exercises: day.exercises.map((exercise) => ({
+        ...exercise,
+        imageUrl: getExerciseImage(exercise.name),
+        videoUrl: sanitizeMediaUrl(exercise.videoUrl) || getExerciseVideo(exercise.name),
+      })),
+    }));
+    const mealsWithMedia = DEMO_MEAL_PLAN.map((day) => ({
+      ...day,
+      meals: day.meals.map((meal) => ({
+        ...meal,
+        imageUrl: getMealImage(meal.name, meal.type),
+      })),
+    }));
+    setPlans(workoutWithMedia, mealsWithMedia, 1);
+    setOnboardingComplete(true);
+    setOnboardingStep(null);
+    setPlansError(null);
+    setIsUsingDemoPlans(true);
+  };
+
+  const runPlanGeneration = async (
+    userProfile: typeof profile,
+    options: { fallbackToDemo?: boolean } = {}
+  ) => {
     if (!userProfile) return;
 
-    setProfile(userProfile);
     setGeneratingPlans(true);
     setPlansError(null);
 
     try {
-      // Try to generate week 1 plans using AI
-      const plans = await generatePlans(userProfile, 1);
+      const feedback = buildPlanFeedback();
+      const plans = await generatePlans(userProfile, 1, undefined, feedback);
 
-      // Transform and set plans
       const workoutPlan = plans.workout.days.map((day: any) => ({
         day: day.day,
         isRestDay: day.isRestDay || false,
@@ -84,8 +151,8 @@ export default function App() {
           reps: Array.isArray(ex.reps) ? ex.reps : [ex.reps],
           restSec: ex.restSec,
           targetWeightKg: ex.targetWeightKg,
-	  imageUrl: ex.imageUrl || getExerciseImage(ex.name),
-          videoUrl: ex.videoUrl || getExerciseVideo(ex.name),
+          imageUrl: getExerciseImage(ex.name),
+          videoUrl: sanitizeMediaUrl(ex.videoUrl) || getExerciseVideo(ex.name),
         })),
       }));
 
@@ -100,7 +167,7 @@ export default function App() {
           carbs: meal.carbs,
           fats: meal.fats,
           ingredients: meal.ingredients || [],
-	  imageUrl: meal.imageUrl || getMealImage(meal.name, meal.type),
+          imageUrl: sanitizeMediaUrl(meal.imageUrl) || getMealImage(meal.name, meal.type),
         })),
       }));
 
@@ -110,35 +177,29 @@ export default function App() {
       setGeneratingPlans(false);
       setIsUsingDemoPlans(false);
     } catch (error) {
-      console.log('AI plan generation failed, using demo plans instead:', error);
-      // Automatically fall back to demo plans - no error screen
-      await handleUseDemoPlans();
+      const message = error instanceof Error ? error.message : 'Failed to generate plans';
+      console.log('AI plan generation failed:', error);
+
+      if (options.fallbackToDemo) {
+        console.log('Falling back to demo plans.');
+        await handleUseDemoPlans();
+      } else {
+        setGeneratingPlans(false);
+        setPlansError(message);
+      }
     }
   };
 
-  const handleUseDemoPlans = async () => {
-    setGeneratingPlans(false);
-    const { DEMO_WORKOUT_PLAN, DEMO_MEAL_PLAN } = await import('./lib/demo-data');
-    const workoutWithMedia = DEMO_WORKOUT_PLAN.map((day) => ({
-      ...day,
-      exercises: day.exercises.map((exercise) => ({
-        ...exercise,
-        imageUrl: exercise.imageUrl || getExerciseImage(exercise.name),
-        videoUrl: exercise.videoUrl || getExerciseVideo(exercise.name),
-      })),
-    }));
-    const mealsWithMedia = DEMO_MEAL_PLAN.map((day) => ({
-      ...day,
-      meals: day.meals.map((meal) => ({
-        ...meal,
-        imageUrl: meal.imageUrl || getMealImage(meal.name, meal.type),
-      })),
-    }));
-    setPlans(workoutWithMedia, mealsWithMedia, 1);
-    setOnboardingComplete(true);
-    setOnboardingStep(null);
-    setPlansError(null);
-    setIsUsingDemoPlans(true);
+  const handleOnboardingComplete = async (userProfile: typeof profile) => {
+    if (!userProfile) return;
+
+    setProfile(userProfile);
+    await runPlanGeneration(userProfile, { fallbackToDemo: true });
+  };
+
+  const handleRegeneratePlans = () => {
+    if (!profile || generatingPlans) return;
+    runPlanGeneration(profile, { fallbackToDemo: false });
   };
 
   // Loading state while generating plans
@@ -168,9 +229,7 @@ export default function App() {
             <button
               onClick={() => {
                 setPlansError(null);
-                if (profile) {
-                  handleOnboardingComplete(profile);
-                }
+                handleRegeneratePlans();
               }}
               className="px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity"
             >
@@ -225,14 +284,10 @@ export default function App() {
           </div>
           <span>AI Coach</span>
         </div>
-        <SettingsMenu 
-          onRegeneratePlans={isUsingDemoPlans ? () => {
-            if (profile) {
-              setIsUsingDemoPlans(false);
-              handleOnboardingComplete(profile);
-            }
-          } : undefined} 
-        />
+        <div className="flex items-center gap-2">
+          <ThemeToggle language={profile.language} />
+          <SettingsMenu onRegeneratePlans={handleRegeneratePlans} />
+        </div>
       </header>
 
       {/* Main content */}

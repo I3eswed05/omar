@@ -9,6 +9,7 @@ interface ExerciseSessionModalProps {
   language: Language;
   week: number;
   day: string;
+  isPremium: boolean;
   onClose: () => void;
   onLog: (log: WorkoutLog) => void;
 }
@@ -18,6 +19,7 @@ export function ExerciseSessionModal({
   language,
   week,
   day,
+  isPremium,
   onClose,
   onLog,
 }: ExerciseSessionModalProps) {
@@ -27,6 +29,14 @@ export function ExerciseSessionModal({
   const [isRunning, setIsRunning] = useState(false);
   const [awaitingNextSet, setAwaitingNextSet] = useState(false);
   const [sessionComplete, setSessionComplete] = useState(false);
+
+  useEffect(() => {
+    setCurrentSet(1);
+    setSecondsLeft(restSeconds);
+    setIsRunning(false);
+    setAwaitingNextSet(false);
+    setSessionComplete(false);
+  }, [exercise.id, restSeconds]);
 
   const formattedTimer = useMemo(() => {
     const minutes = Math.floor(secondsLeft / 60);
@@ -73,12 +83,25 @@ export function ExerciseSessionModal({
   };
 
   const handleLog = (status: WorkoutLog['status']) => {
+    let reason: string | undefined;
+
+    if (status === 'skipped') {
+      const promptMessage = t('skip_reason_prompt', language) || '';
+      const response = window.prompt(promptMessage);
+      if (response === null) {
+        return;
+      }
+      const trimmed = response.trim();
+      reason = trimmed || t('skip_reason_default', language);
+    }
+
     onLog({
       exerciseId: exercise.id,
       week,
       day,
       status,
       date: new Date().toISOString(),
+      reason,
     });
     onClose();
   };
@@ -99,21 +122,13 @@ export function ExerciseSessionModal({
 
         <div className="grid md:grid-cols-2 gap-4 p-4">
           <div className="space-y-4">
-            <div className="aspect-video bg-black rounded-lg overflow-hidden">
-              {exercise.videoUrl ? (
-                <video
-                  controls
-                  className="w-full h-full"
-                  src={exercise.videoUrl}
-                >
-                  Your browser does not support the video tag.
-                </video>
-              ) : (
-                <div className="w-full h-full flex flex-col items-center justify-center text-white text-sm gap-2">
-                  <Timer className="w-6 h-6" />
-                  <span>{t('no_video_available', language)}</span>
-                </div>
-              )}
+            <div className="aspect-video bg-muted rounded-lg overflow-hidden flex items-center justify-center p-4 text-center text-sm text-muted-foreground">
+              <div className="space-y-2">
+                <Timer className="w-6 h-6 mx-auto text-primary" />
+                <span>
+                  {t(isPremium ? 'media_video_premium_placeholder' : 'media_video_locked_hint', language)}
+                </span>
+              </div>
             </div>
 
             <div className="text-sm text-muted-foreground space-y-1">
@@ -163,6 +178,9 @@ export function ExerciseSessionModal({
                   </Button>
                 )}
               </div>
+              <p className="mt-3 text-xs text-muted-foreground">
+                {t('timer_guidance', language)}
+              </p>
             </div>
 
             {sessionComplete && (

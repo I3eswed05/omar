@@ -8,17 +8,9 @@ const exerciseImagePatterns: Array<{ keywords: string[]; url: string }> = [
   { keywords: ['cardio', 'run', 'bike'], url: 'https://images.unsplash.com/photo-1554284126-aa88f22d8b74?auto=format&fit=crop&w=800&q=80' },
 ];
 
-const mealImagePatterns: Array<{ keywords: string[]; url: string }> = [
-  { keywords: ['breakfast', 'oat', 'pancake'], url: 'https://images.unsplash.com/photo-1517677129300-07b130802f46?auto=format&fit=crop&w=800&q=80' },
-  { keywords: ['salad', 'greens'], url: 'https://images.unsplash.com/photo-1447175008436-054170c2e979?auto=format&fit=crop&w=800&q=80' },
-  { keywords: ['chicken'], url: 'https://images.unsplash.com/photo-1604908177075-106329130ff2?auto=format&fit=crop&w=800&q=80' },
-  { keywords: ['fish', 'salmon'], url: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=800&q=80' },
-  { keywords: ['snack', 'yogurt'], url: 'https://images.unsplash.com/photo-1499636136210-6f4ee915583e?auto=format&fit=crop&w=800&q=80' },
-  { keywords: ['shake', 'smoothie'], url: 'https://images.unsplash.com/photo-1527169402691-feff5539e52c?auto=format&fit=crop&w=800&q=80' },
-];
+const mealPlaceholderImage = '/images/meal-placeholder.svg';
 
 const defaultExerciseImage = 'https://images.unsplash.com/photo-1517832207067-4db24a2ae47c?auto=format&fit=crop&w=800&q=80';
-const defaultMealImage = 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=800&q=80';
 const defaultExerciseVideo = 'https://samplelib.com/lib/preview/mp4/sample-5s.mp4';
 
 function findMatch(name: string, patterns: Array<{ keywords: string[]; url: string }>, fallback: string) {
@@ -35,9 +27,8 @@ export function getExerciseImage(name: string): string {
   return findMatch(name, exerciseImagePatterns, defaultExerciseImage);
 }
 
-export function getMealImage(name: string, type?: string): string {
-  const base = findMatch(`${type || ''} ${name}`, mealImagePatterns, defaultMealImage);
-  return base;
+export function getMealImage(_name: string, _type?: string): string {
+  return mealPlaceholderImage;
 }
 
 export function getExerciseVideo(name: string): string {

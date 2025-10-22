@@ -1,4 +1,6 @@
+import { Check, RefreshCcw, X } from 'lucide-react';
 import { Card } from './ui/card';
+import { Button } from './ui/button';
 import { Meal, MealLog } from '../store/app-store';
 import { t, Language } from '../lib/i18n';
 
@@ -9,9 +11,10 @@ interface MealCardProps {
   day: string;
   log?: MealLog;
   onLog: (log: MealLog) => void;
+  onRequestAlternative: (meal: Meal) => void;
 }
 
-export function MealCard({ meal, language, week, day, log, onLog }: MealCardProps) {
+export function MealCard({ meal, language, week, day, log, onLog, onRequestAlternative }: MealCardProps) {
   const handleConsumed = (consumed: boolean) => {
     onLog({
       mealId: meal.id,
@@ -24,13 +27,9 @@ export function MealCard({ meal, language, week, day, log, onLog }: MealCardProp
 
   return (
     <Card className="overflow-hidden">
-      {meal.imageUrl && (
-        <img
-          src={meal.imageUrl}
-          alt={meal.name}
-          className="w-full h-40 object-cover"
-        />
-      )}
+      <div className="w-full h-40 bg-muted flex items-center justify-center text-center text-sm text-muted-foreground px-4">
+        {t('media_photo_placeholder', language)}
+      </div>
 
       <div className="p-4 space-y-3">
         <div>
@@ -95,8 +94,16 @@ export function MealCard({ meal, language, week, day, log, onLog }: MealCardProp
             {log.consumed ? t('mark_consumed', language) : t('mark_skipped', language)}
           </div>
         )}
+        <Button
+          onClick={() => onRequestAlternative(meal)}
+          size="sm"
+          variant="outline"
+          className="w-full"
+        >
+          <RefreshCcw className="w-4 h-4 mr-1" />
+          {t('request_alternative', language)}
+        </Button>
       </div>
     </Card>
   );
 }
-

@@ -1,6 +1,10 @@
+import { useState } from 'react';
 import { useAppStore } from '../../store/app-store';
 import { t } from '../../lib/i18n';
 import { MealCard } from '../meal-card';
+import { MealAlternativesModal, SuggestedMeal } from '../alternatives-modal';
+import { getMealImage } from '../../lib/media';
+import { requestMealAlternatives } from '../../lib/api';
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
@@ -13,7 +17,84 @@ export function MealsScreen() {
     selectedDay,
     setSelectedDay,
     addMealLog,
+    replaceMeal,
   } = useAppStore();
+
+  const [mealAlternatives, setMealAlternatives] = useState<{
+    meal: SuggestedMeal | null;
+    suggestions: SuggestedMeal[];
+    loading: boolean;
+    error: string | null;
+  }>({
+    meal: null,
+    suggestions: [],
+    loading: false,
+    error: null,
+  });
+
+  const closeMealAlternatives = () =>
+    setMealAlternatives({
+      meal: null,
+      suggestions: [],
+      loading: false,
+      error: null,
+    });
+
+  const handleRequestAlternative = async (meal: SuggestedMeal) => {
+    if (!profile) return;
+
+    const reason = window.prompt(t('alternative_reason_prompt', profile.language) || '');
+    if (reason === null) {
+      return;
+    }
+
+    setMealAlternatives({
+      meal,
+      suggestions: [],
+      loading: true,
+      error: null,
+    });
+
+    try {
+      const response = await requestMealAlternatives(profile, meal, reason.trim());
+      const suggestions: SuggestedMeal[] = response.alternatives.map((item: SuggestedMeal, index: number) => ({
+        ...item,
+        id: item.id || `${meal.id}-alt-${index}-${Date.now()}`,
+        imageUrl: getMealImage(item.name, item.type),
+        ingredients: Array.isArray(item.ingredients) ? item.ingredients : [],
+      }));
+
+      setMealAlternatives({
+        meal,
+        suggestions,
+        loading: false,
+        error: null,
+      });
+    } catch (err) {
+      console.error(err);
+      setMealAlternatives({
+        meal,
+        suggestions: [],
+        loading: false,
+        error: (err as Error).message,
+      });
+    }
+  };
+
+  const handleUseMealAlternative = (replacement: SuggestedMeal) => {
+    if (!mealAlternatives.meal) return;
+
+    replaceMeal({
+      day: selectedDay,
+      mealId: mealAlternatives.meal.id,
+      replacement: {
+        ...replacement,
+        id: replacement.id,
+        imageUrl: getMealImage(replacement.name, replacement.type),
+      },
+    });
+    closeMealAlternatives();
+  };
 
   if (!profile) return null;
 
@@ -99,6 +180,7 @@ export function MealsScreen() {
                 day={selectedDay}
                 log={log}
                 onLog={addMealLog}
+                onRequestAlternative={handleRequestAlternative}
               />
             );
           })}
@@ -110,6 +192,16 @@ export function MealsScreen() {
           )}
         </div>
       </div>
+      <MealAlternativesModal
+        open={Boolean(mealAlternatives.meal)}
+        loading={mealAlternatives.loading}
+        language={profile.language}
+        onClose={closeMealAlternatives}
+        suggestions={mealAlternatives.suggestions}
+        onSelect={handleUseMealAlternative}
+        error={mealAlternatives.error || undefined}
+        originalName={mealAlternatives.meal?.name || ''}
+      />
     </div>
   );
 }
